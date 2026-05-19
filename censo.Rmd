@@ -1,0 +1,135 @@
+---
+title: "censo 2019"
+author: "Camila"
+date: "2026-05-19"
+output: html_document
+---
+```{r}
+library(rio)
+library(dplyr)
+```
+
+```{r}
+rm(list = ls()) 
+knitr::knit_hooks$set(inline = as.character) 
+
+censo="https://github.com/CamilaAvila13/CENSO-2019/raw/refs/heads/main/censo%202019%20(2).xlsx"
+censo1=import(censo) 
+
+# display table
+library(magrittr) # needed for pipe %>% 
+censo1%>%
+    rmarkdown::paged_table()
+```
+```{r}
+names(censo1)
+```
+Calcule estos indicadores:
+* Porcentaje de viviendas con paredes de "Ladrillo o bloque de cemento"
+* Porcentaje de viviendas con techos de "Concreto armado"
+* Porcentaje de viviendas con pisos de  ""Madera (pona, tornillo, etc.)","Cemento","Tierra", u "otro material"
+
+```{r}
+library(polycor)
+corMatrix=polycor::hetcor(censo1)$correlations
+```
+```{r}
+library(psych)
+psych::KMO(corMatrix) 
+```
+```{r}
+round(corMatrix,2)
+```
+```{r}
+library(ggcorrplot)
+ggcorrplot(corMatrix)
+```
+
+
+```{r}
+cortest.bartlett(corMatrix,n=nrow(censo1))$p.value>0.05
+```
+
+```{r}
+library(matrixcalc)
+
+is.singular.matrix(corMatrix)
+```
+
+CLUSTER 
+```{r}
+install.packages("openxlsx")
+install.packages('ggrepel')
+install.packages("NbClust")
+```
+```{r}
+str(censo1)
+```
+
+```{r}
+boxplot(censo1[,-1])
+```
+
+```{r}
+dontselect=c("Ladrillo o bloque de cemento"                      
+, "Piedra o sillar con cal o cemento"                 
+, "Adobe"                                             
+, "Tapia"                                             
+, "Quincha (caña con barro)"                          
+, "Piedra con barro"                                  
+,"Madera (pona, tornillo etc.)"                      
+,"Triplay / calamina / estera"                       
+, "Otro material...9"                                 
+, "Concreto armado"                                   
+, "Madera"                                            
+, "Tejas"                                             
+,"Planchas de calamina, fibra de cemento o similares"
+, "Caña o estera con torta de barro o cemento"        
+, "Triplay / estera / carrizo"                        
+,"Paja, hoja de palmera y similares"                 
+, "Otro material...17"                                
+, "Parquet o madera pulida"                           
+,"Láminas asfálticas, vinílicos o similares"         
+,"Losetas, terrazos, cerámicos o similares"       ,"Madera (pona, tornillo, etc.)")
+select=setdiff(names(censo1),dontselect) 
+censo21=censo1[,select]
+```
+Calcular el indice de riqueza 
+```{r}
+library(polycor)
+corMatrix1=polycor::hetcor(censo21)$correlations
+```
+
+```{r}
+library(psych)
+psych::KMO(corMatrix1) 
+```
+
+```{r}
+round(corMatrix1,2)
+```
+
+```{r}
+cortest.bartlett(corMatrix1,n=nrow(censo21))$p.value>0.05
+```
+
+```{r}
+library(matrixcalc)
+
+is.singular.matrix(corMatrix1)
+```
+```{r}
+fa.parallel(censo21, fa = 'fa',correct = T,plot = F)
+```
+
+```{r}
+library(GPArotation)
+resfa <- fa(censo21,
+            nfactors = 1,
+            cor = 'mixed',
+            rotate = "varimax", 
+            fm="minres")
+print(resfa$loadings)
+```
+
+
